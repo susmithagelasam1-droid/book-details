@@ -1,0 +1,405 @@
+ <!DOCTYPE html>
+<html>
+<head>
+<title>Books Table</title>
+
+<style>
+
+body{
+    font-family: Arial;
+    padding:20px;
+}
+
+h2{
+    margin-bottom:10px;
+}
+
+input{
+    display:inline-block;
+    margin-right:10px;
+    margin-bottom: 20px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    text-align:center;
+    font-size:13px;
+}
+
+thead{
+    background:black;
+    color:white;
+}
+
+th, td{
+    padding:6px;
+    border:1px solid gray;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:150px;
+}
+
+th{
+    cursor:pointer;
+}
+
+tbody tr:nth-child(odd){
+    background-color:#b3f5b3;
+}
+
+tbody tr:nth-child(even){
+    background-color:#efef7a;
+}
+
+.pagination{
+    margin-top:15px;
+}
+
+.pagination button{
+    padding:6px 12px;
+    margin:2px;
+    cursor:pointer;
+}
+
+a{
+    color:blue;
+    text-decoration:none;
+}
+.input-container{
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+}
+
+.input-container input{
+    width:300px;
+    padding:8px;
+}
+
+
+</style>
+
+</head>
+
+<body>
+
+<h2>📚 Books Table</h2>
+<div class="input_container">
+
+<input type="text" id="search" placeholder="Search books...">&nbsp;&nbsp;
+
+
+<input type="text" id="categorySort" placeholder="Search by category name...">
+</div>
+<table>
+
+<thead>
+<tr>
+
+<th>S.No</th>
+
+<th onclick="sortTable('title')">Title ↑↓</th>
+
+<th onclick="sortTable('isbn')">ISBN ↑↓</th>
+
+<th onclick="sortTable('pageCount')">Page Count ↑↓</th>
+
+<th>Thumbnail</th>
+
+<th>Short Description</th>
+
+<th>Long Description</th>
+
+<th onclick="sortTable('status')">Status ↑↓</th>
+
+<th>Authors</th>
+
+<th onclick="sortTable('categories')">Categories ↑↓</th>
+
+<th onclick="sortTable('price')">Price ↑↓</th>
+
+<th>Currency</th>
+
+<th>Discount</th>
+
+<th>Discount Units</th>
+
+</tr>
+</thead>
+
+<tbody id="tbody"></tbody>
+
+</table>
+
+<div id="pagination" class="pagination"></div>
+
+
+<script src="script.js"></script>
+
+<script>
+
+let filteredBooks = [...books];
+
+let currentPage = 1;
+
+const rowsPerPage = 10;
+
+let sortDirection = {};
+
+
+
+function displayBooks(){
+
+const tbody = document.getElementById("tbody");
+
+tbody.innerHTML = "";
+
+const start = (currentPage - 1) * rowsPerPage;
+
+const pageData = filteredBooks.slice(start, start + rowsPerPage);
+
+pageData.forEach((book,index)=>{
+
+let sno = start + index + 1;
+
+let shortDesc = book.shortDescription
+? book.shortDescription.substring(0,30)+"..."
+: "";
+
+let longDesc = book.longDescription
+? book.longDescription.substring(0,50)+"..."
+: "";
+
+let thumbnail = book.thumbnailUrl
+? `<a href="${book.thumbnailUrl}" target="_blank">View</a>`
+: "";
+
+let row = `
+<tr>
+
+<td>${sno}</td>
+
+<td title="${book.title||""}">${book.title||""}</td>
+
+<td>${book.isbn||""}</td>
+
+<td>${book.pageCount||""}</td>
+
+<td>${thumbnail}</td>
+
+<td title="${book.shortDescription||""}">
+${shortDesc}
+</td>
+
+<td title="${book.longDescription||""}">
+${longDesc}
+</td>
+
+<td>${book.status||""}</td>
+
+<td>${book.authors?book.authors.join(", "):""}</td>
+
+<td>${book.categories?book.categories.join(", "):""}</td>
+
+<td>${book.price||""}</td>
+
+<td>${book.currency||""}</td>
+
+<td>${book.discount||""}</td>
+
+<td>${book.discountUnits||""}</td>
+
+</tr>
+`;
+
+tbody.innerHTML += row;
+
+});
+
+createPagination();
+
+}
+
+
+
+function createPagination(){
+
+const pageCount =
+Math.ceil(filteredBooks.length / rowsPerPage);
+
+const pagination =
+document.getElementById("pagination");
+
+pagination.innerHTML="";
+
+let prevBtn=document.createElement("button");
+
+prevBtn.innerText="Prev";
+
+prevBtn.disabled=currentPage===1;
+
+prevBtn.onclick=function(){
+
+currentPage--;
+
+displayBooks();
+
+};
+
+pagination.appendChild(prevBtn);
+
+
+let pageInfo=document.createElement("span");
+
+pageInfo.innerText=
+" Page "+currentPage+" of "+pageCount+" ";
+
+pagination.appendChild(pageInfo);
+
+
+let nextBtn=document.createElement("button");
+
+nextBtn.innerText="Next";
+
+nextBtn.disabled=currentPage===pageCount;
+
+nextBtn.onclick=function(){
+
+currentPage++;
+
+displayBooks();
+
+};
+
+pagination.appendChild(nextBtn);
+
+}
+
+
+
+document.getElementById("search")
+.addEventListener("input",function(){
+
+let value=this.value.toLowerCase();
+
+filteredBooks=books.filter(book=>
+
+(book.title &&
+book.title.toLowerCase().includes(value))
+
+||
+
+(book.isbn &&
+book.isbn.toLowerCase().includes(value))
+
+||
+
+(book.authors &&
+book.authors.join(", ")
+.toLowerCase().includes(value))
+
+||
+
+(book.categories &&
+book.categories.join(", ")
+.toLowerCase().includes(value))
+
+);
+
+currentPage=1;
+
+displayBooks();
+
+});
+
+
+
+document.getElementById("categorySort")
+.addEventListener("input",function(){
+
+let value=this.value.toLowerCase();
+
+filteredBooks=books.filter(book=>
+
+book.categories &&
+book.categories.some(cat=>
+cat.toLowerCase().includes(value))
+
+);
+
+filteredBooks.sort((a,b)=>{
+
+let catA=a.categories?
+a.categories[0].toLowerCase():"";
+
+let catB=b.categories?
+b.categories[0].toLowerCase():"";
+
+return catA.localeCompare(catB);
+
+});
+
+currentPage=1;
+
+displayBooks();
+
+});
+
+
+
+function sortTable(key){
+
+sortDirection[key]=
+sortDirection[key]==="asc"?"desc":"asc";
+
+filteredBooks.sort((a,b)=>{
+
+let valA;
+let valB;
+
+if(key==="categories"){
+
+valA=a.categories?
+a.categories[0].toLowerCase():"";
+
+valB=b.categories?
+b.categories[0].toLowerCase():"";
+
+}
+else{
+
+valA=a[key]||"";
+
+valB=b[key]||"";
+
+if(typeof valA==="string")
+valA=valA.toLowerCase();
+
+if(typeof valB==="string")
+valB=valB.toLowerCase();
+
+}
+
+if(valA<valB)
+return sortDirection[key]==="asc"?-1:1;
+
+if(valA>valB)
+return sortDirection[key]==="asc"?1:-1;
+
+return 0;
+
+});
+
+displayBooks();
+
+}
+
+
+displayBooks();
+
+</script>
+
+</body>
+</html>
